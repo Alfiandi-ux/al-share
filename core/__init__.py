@@ -1,0 +1,3 @@
+"""
+Al-share Core Module
+"""

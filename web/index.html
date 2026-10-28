@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al-share | Unlimited WLAN Data Sharing</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <!-- Ambient background glow effects -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                        <path d="M12 12v9"></path>
+                        <path d="m16 16-4-4-4 4"></path>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>Al-share</h1>
+                    <span class="badge-wifi">
+                        <span class="pulse-dot"></span> WLAN Unlimited
+                    </span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <!-- Storage Pill -->
+                <div class="storage-pill" id="storageIndicator" title="Kapasitas Ruang Penyimpanan">
+                    <div class="storage-text">
+                        <span class="storage-label">Penyimpanan:</span>
+                        <strong id="storageFreeText">Memuat...</strong>
+                    </div>
+                    <div class="storage-mini-bar">
+                        <div class="storage-mini-fill" id="storageMiniFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- QR Modal Button -->
+                <button class="btn btn-icon" id="btnOpenQr" title="Tampilkan QR Code Sambungan">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="5" height="5" x="3" y="3" rx="1"></rect>
+                        <rect width="5" height="5" x="16" y="3" rx="1"></rect>
+                        <rect width="5" height="5" x="3" y="16" rx="1"></rect>
+                        <path d="M21 16h-3a2 2 0 0 0-2 2v3"></path>
+                        <path d="M21 21v.01"></path>
+                        <path d="M12 7v3a2 2 0 0 1-2 2H7"></path>
+                        <path d="M3 12h.01"></path>
+                        <path d="M12 3h.01"></path>
+                        <path d="M12 16v.01"></path>
+                        <path d="M16 12h1"></path>
+                        <path d="M21 12v.01"></path>
+                        <path d="M12 21v-1"></path>
+                    </svg>
+                    <span class="btn-text-desktop">QR Sambung</span>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button class="btn btn-icon" id="btnThemeToggle" title="Ganti Tema Gelap / Terang">
+                    <svg id="themeIconDark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M12 2v2"></path>
+                        <path d="M12 20v2"></path>
+                        <path d="m4.93 4.93 1.41 1.41"></path>
+                        <path d="m17.66 17.66 1.41 1.41"></path>
+                        <path d="M2 12h2"></path>
+                        <path d="M20 12h2"></path>
+                        <path d="m6.34 17.66-1.41 1.41"></path>
+                        <path d="m19.07 4.93-1.41 1.41"></path>
+                    </svg>
+                    <svg id="themeIconLight" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="tab-upload">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" x2="12" y1="3" y2="15"></line>
+                </svg>
+                <span>Kirim & Unggah</span>
+            </button>
+            <button class="tab-btn" data-tab="tab-files">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+                </svg>
+                <span>Semua File</span>
+                <span class="counter-badge" id="fileCountBadge">0</span>
+            </button>
+            <button class="tab-btn" data-tab="tab-clipboard">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                </svg>
+                <span>Papan Teks (Clipboard)</span>
+            </button>
+            <button class="tab-btn" data-tab="tab-network">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+                    <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                    <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                </svg>
+                <span>Jaringan WiFi</span>
+            </button>
+        </nav>
+
+        <!-- Main Content Views -->
+        <main class="app-main">
+            <!-- TAB 1: UPLOAD & SEND -->
+            <section class="tab-content active" id="tab-upload">
+                <div class="upload-container">
+                    <!-- Drop Zone -->
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-content">
+                            <div class="drop-icon-wrapper">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                                    <path d="M12 12v9"></path>
+                                    <path d="m16 16-4-4-4 4"></path>
+                                </svg>
+                            </div>
+                            <h3>Tarik & Lepas File ke Sini</h3>
+                            <p class="drop-subtitle">Kapasitas <strong>Tanpa Batas (Unlimited Size)</strong> dengan teknologi Chunk Streaming disk</p>
+                            
+                            <div class="drop-actions">
+                                <label class="btn btn-primary">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M5 12h14"></path>
+                                        <path d="M12 5v14"></path>
+                                    </svg>
+                                    Pilih File
+                                    <input type="file" id="fileInput" multiple style="display: none;">
+                                </label>
+                                <label class="btn btn-secondary">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+                                    </svg>
+                                    Pilih Folder
+                                    <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;">
+                                </label>
+                            </div>
+                            <div class="drop-hints">
+                                <span>⚡ Kecepatan Penuh Jaringan Lokal</span>
+                                <span>🔒 Terenkripsi & Privat di WiFi Anda</span>
+                                <span>🔄 Auto-Resume Transfer</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Uploads List -->
+                    <div class="uploads-panel" id="uploadsPanel" style="display: none;">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <h3>Proses Pengiriman File</h3>
+                                <span class="badge-count" id="uploadCount">0 file</span>
+                            </div>
+                            <button class="btn btn-sm btn-ghost" id="btnClearCompleted">Bersihkan yang Selesai</button>
+                        </div>
+                        <div class="upload-list" id="uploadList">
+                            <!-- Injected dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: ALL FILES (FILE MANAGER) -->
+            <section class="tab-content" id="tab-files">
+                <div class="files-container">
+                    <!-- Filter & Toolbar -->
+                    <div class="files-toolbar">
+                        <div class="search-box">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
+                            </svg>
+                            <input type="text" id="fileSearchInput" placeholder="Cari file berdasarkan nama...">
+                        </div>
+
+                        <div class="category-filters" id="categoryFilters">
+                            <button class="filter-chip active" data-cat="all">Semua</button>
+                            <button class="filter-chip" data-cat="video">Video</button>
+                            <button class="filter-chip" data-cat="image">Gambar</button>
+                            <button class="filter-chip" data-cat="audio">Musik</button>
+                            <button class="filter-chip" data-cat="document">Dokumen</button>
+                            <button class="filter-chip" data-cat="archive">Arsip</button>
+                        </div>
+
+                        <div class="toolbar-actions">
+                            <button class="btn btn-icon" id="btnRefreshFiles" title="Segarkan Daftar File">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                    <path d="M3 3v5h5"></path>
+                                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                                    <path d="M16 21h5v-5"></path>
+                                </svg>
+                            </button>
+                            <div class="view-toggle">
+                                <button class="btn btn-icon active" id="btnViewGrid" title="Tampilan Kotak">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+                                        <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+                                        <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+                                        <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+                                    </svg>
+                                </button>
+                                <button class="btn btn-icon" id="btnViewList" title="Tampilan Baris">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="8" x2="21" y1="6" y2="6"></line>
+                                        <line x1="8" x2="21" y1="12" y2="12"></line>
+                                        <line x1="8" x2="21" y1="18" y2="18"></line>
+                                        <line x1="3" x2="3.01" y1="6" y2="6"></line>
+                                        <line x1="3" x2="3.01" y1="12" y2="12"></line>
+                                        <line x1="3" x2="3.01" y1="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Files Container (Grid or Table) -->
+                    <div class="files-display grid-view" id="filesContainer">
+                        <!-- Loaded dynamically -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="emptyState" style="display: none;">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+                            </svg>
+                        </div>
+                        <h3>Belum Ada File yang Dibagikan</h3>
+                        <p>Kirim file melalui tab "Kirim & Unggah" dari perangkat ini atau perangkat lain di jaringan WiFi yang sama.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: CLIPBOARD / TEXT SHARING -->
+            <section class="tab-content" id="tab-clipboard">
+                <div class="clipboard-container">
+                    <div class="clipboard-composer card">
+                        <div class="composer-header">
+                            <h3>Bagikan Teks & Catatan Cepat</h3>
+                            <span class="subtext">Kirim teks, URL, pesan, atau password instan antar perangkat</span>
+                        </div>
+                        <div class="composer-body">
+                            <textarea id="clipboardInput" placeholder="Ketik atau tempel teks di sini untuk dibagikan ke seluruh perangkat..."></textarea>
+                            <div class="composer-actions">
+                                <input type="text" id="senderName" class="sender-input" placeholder="Nama Perangkat (cth: HP Saya)" value="">
+                                <button class="btn btn-primary" id="btnSendClipboard">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                    </svg>
+                                    Kirim Teks
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="clipboard-history">
+                        <div class="history-header">
+                            <h3>Riwayat Teks Tersimpan</h3>
+                            <button class="btn btn-sm btn-ghost text-danger" id="btnClearClipboard">Hapus Semua</button>
+                        </div>
+                        <div class="clipboard-list" id="clipboardList">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: NETWORK & WLAN DETAILS -->
+            <section class="tab-content" id="tab-network">
+                <div class="network-container">
+                    <div class="network-card card">
+                        <div class="network-header">
+                            <div class="status-indicator">
+                                <span class="pulse-dot-large"></span>
+                                <div>
+                                    <h3>Server WLAN Aktif</h3>
+                                    <p class="text-muted">Siap menerima dan mengirim data pada kecepatan lokal penuh</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="network-details">
+                            <div class="info-group">
+                                <label>Alamat Akses di Jaringan WiFi:</label>
+                                <div class="ip-list" id="networkIpList">
+                                    <!-- Dynamic IPs -->
+                                </div>
+                            </div>
+
+                            <div class="info-group">
+                                <label>Pindai untuk Sambung Cepat:</label>
+                                <div class="qr-showcase" id="networkQrContainer">
+                                    <!-- QR SVG -->
+                                </div>
+                                <span class="qr-hint">Arahkan kamera HP ke kode QR di atas untuk membuka Al-share</span>
+                            </div>
+
+                            <div class="info-group">
+                                <label>Folder Penyimpanan:</label>
+                                <div class="folder-display">
+                                    <code id="serverFolderDisplay">~/alshare_downloads</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- QR Code Popup Modal -->
+    <div class="modal" id="qrModal">
+        <div class="modal-backdrop" id="qrModalBackdrop"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Sambungkan Perangkat Lain</h3>
+                <button class="btn-close" id="btnCloseQrModal">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="modal-desc">Pastikan perangkat lain terhubung ke WiFi yang sama, lalu scan QR berikut:</p>
+                <div class="modal-qr-box" id="modalQrBox">
+                    <!-- Dynamic SVG QR -->
+                </div>
+                <div class="modal-links" id="modalLinks">
+                    <!-- Dynamic Link Buttons -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Preview Modal (Video, Audio, Image, Text) -->
+    <div class="modal" id="previewModal">
+        <div class="modal-backdrop" id="previewModalBackdrop"></div>
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <h3 id="previewTitle">Pratinjau File</h3>
+                <div class="modal-header-actions">
+                    <a id="previewDownloadBtn" class="btn btn-sm btn-primary" download>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" x2="12" y1="15" y2="3"></line>
+                        </svg>
+                        Unduh
+                    </a>
+                    <button class="btn-close" id="btnClosePreview">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body preview-body" id="previewContent">
+                <!-- Preview elements inserted dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
