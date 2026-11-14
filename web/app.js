@@ -10,7 +10,7 @@ const state = {
     activeFilter: 'all',
     searchQuery: '',
     viewMode: localStorage.getItem('alshare_view_mode') || 'grid',
-    theme: localStorage.getItem('alshare_theme') || 'dark',
+    theme: localStorage.getItem('alshare_theme') || 'light',
     info: null,
     uploadQueue: [],
     activeUploads: new Map(), // uploadId -> { file, status, xhr, ... }

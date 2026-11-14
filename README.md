@@ -15,9 +15,9 @@ Dibuat menggunakan **Python 3 Standard Library** murni (zero external pip depend
   - Melanjutkan unduhan yang terputus (*resume download*).
   - Kompatibel penuh dengan download accelerator (IDM, aria2, curl, browser download manager).
 
-### 2. 💎 Tampilan Profesional (Modern Glassmorphism UI)
-- **Desain Kelas Industri**: Tema gelap bernuansa Tokyo Night / Midnight Slate dengan aksen neon cyan dan indigo.
-- **Toggle Tema Gelap / Terang**: Dukungan mode terang (*Catppuccin Latte*) dan mode gelap dengan 1 klik.
+### 2. 💎 Tampilan Neo-Brutalism (Bold & Fungsional)
+- **Desain Kelas Industri**: Border tinta tebal, hard shadow tanpa blur, warna flat menyala, dan tipografi tebal ala neo-brutalism.
+- **Toggle Tema Gelap / Terang**: Mode gelap *Ink Black* dan mode terang *Paper Cream* dengan 1 klik.
 - **Speedometer & Estimasi Waktu (ETA)**: Menampilkan kecepatan transfer *real-time* (MB/s atau KB/s) dan sisa waktu transfer.
 - **Drag & Drop Dropzone**: Mendukung tarik-lepas banyak berkas sekaligus dan unggah seluruh folder.
 - **File Manager Interaktif**:
@@ -84,7 +84,7 @@ al-share/
 │   └── storage.py      # Pengelola berkas, chunk assembler, dan clipboard
 └── web/
     ├── index.html      # Tampilan antarmuka pengguna (SPA)
-    ├── style.css       # Desain CSS Glassmorphism responsif
+    ├── style.css       # Desain CSS Neo-Brutalism responsif
     └── app.js          # Mesin pengunggah potongan file (Chunked Uploader)
 ```
 
