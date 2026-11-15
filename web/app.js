@@ -887,7 +887,7 @@ function renderFilesList() {
                 </div>
                 <div class="file-card-actions">
                     <button class="btn btn-secondary" onclick="openPreview('${encodeURIComponent(file.name)}', '${file.category}')" title="Pratinjau">
-                        👁️ Pratinjau
+                        👁️ Lihat
                     </button>
                     <a href="/download/${encodeURIComponent(file.name)}" class="btn btn-primary" download title="Unduh File">
                         ⬇️ Unduh
@@ -917,7 +917,7 @@ function renderFilesList() {
                 </div>
                 <div class="row-actions">
                     <button class="btn btn-sm btn-secondary" onclick="openPreview('${encodeURIComponent(file.name)}', '${file.category}')">
-                        Pratinjau
+                        Lihat
                     </button>
                     <a href="/download/${encodeURIComponent(file.name)}" class="btn btn-sm btn-primary" download>
                         Unduh
@@ -983,6 +983,7 @@ async function openPreview(encodedName, category) {
     const previewUrl = `/download/${encodedName}?preview=1`;
 
     DOM.previewTitle.textContent = rawName;
+    DOM.previewTitle.title = rawName;
     DOM.previewDownloadBtn.href = downloadUrl;
     DOM.previewContent.innerHTML = '<div style="padding: 2rem; color: #fff;">Memuat pratinjau...</div>';
     DOM.previewModal.classList.add('active');

@@ -10,7 +10,7 @@
  * mengizinkannya dan UI tetap berjalan normal tanpa cache offline.
  */
 
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.2.0';
 const CACHE_PREFIX = 'alshare-';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${VERSION}`;

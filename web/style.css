@@ -959,7 +959,7 @@ body {
 /* ---------------------------- Files: Grid View -------------------------- */
 .files-display.grid-view {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
     gap: 1.1rem;
 }
 
@@ -973,6 +973,7 @@ body {
     justify-content: space-between;
     gap: 0.85rem;
     position: relative;
+    min-width: 0;
     transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 
@@ -1039,13 +1040,15 @@ body {
 
 .file-card-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.45rem;
     padding-top: 0.7rem;
     border-top: 2px solid var(--ink);
 }
 
 .file-card-actions .btn {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
     padding: 0.45rem 0.35rem;
     font-size: 0.7rem;
     border-width: 2px;
@@ -1458,12 +1461,17 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.02em;
     color: #0a0a0a;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .modal-header-actions {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .btn-close {
@@ -1697,24 +1705,80 @@ body {
     .files-toolbar {
         flex-direction: column;
         align-items: stretch;
+        gap: 0.7rem;
     }
     .search-box {
+        min-width: 0;
+        width: 100%;
         max-width: 100%;
     }
     .category-filters {
-        padding-bottom: 0.35rem;
+        flex-wrap: wrap;
+        overflow: visible;
+        padding-bottom: 0;
+    }
+    .filter-chip {
+        flex: 0 0 auto;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.68rem;
     }
     .toolbar-actions {
+        width: 100%;
         justify-content: space-between;
+    }
+    .files-display.grid-view {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+    .file-item-card {
+        padding: 0.85rem;
+        gap: 0.65rem;
+        box-shadow: var(--shadow-sm);
+    }
+    .file-item-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm);
+    }
+    .file-icon-box {
+        width: 42px;
+        height: 42px;
+        font-size: 1.2rem;
+    }
+    .file-card-actions {
+        gap: 0.35rem;
+        padding-top: 0.6rem;
+    }
+    .file-card-actions .btn {
+        padding: 0.45rem 0.25rem;
+        font-size: 0.64rem;
+        letter-spacing: 0;
+        gap: 0.3rem;
+    }
+    .file-card-actions .btn-icon {
+        padding: 0.45rem 0.55rem;
     }
     .file-item-row {
         flex-wrap: wrap;
+        padding: 0.65rem 0.75rem;
+        gap: 0.6rem;
     }
     .row-actions {
         width: 100%;
+        flex-wrap: wrap;
         justify-content: flex-end;
         padding-top: 0.5rem;
         border-top: 2px dashed var(--ink);
+    }
+    .row-actions .btn {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 0.4rem 0.5rem;
+        font-size: 0.66rem;
+        letter-spacing: 0;
+        white-space: nowrap;
+    }
+    .row-actions .btn-icon {
+        flex: 0 0 auto;
     }
     .composer-actions {
         flex-direction: column;
@@ -2286,6 +2350,24 @@ body.native-standalone .install-sheet {
 
     .tab-btn {
         font-size: 0.56rem;
+    }
+
+    .filter-chip {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.62rem;
+    }
+
+    .file-card-actions .btn {
+        padding: 0.4rem 0.2rem;
+        font-size: 0.6rem;
+    }
+
+    .file-card-actions .btn-icon {
+        padding: 0.4rem 0.45rem;
+    }
+
+    .file-card-title {
+        font-size: 0.82rem;
     }
 }
 
