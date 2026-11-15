@@ -2,15 +2,76 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Al-share | Unlimited WLAN Data Sharing</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+    <meta name="description" content="Al-share — berbagi file tanpa batas ukuran dan clipboard antar perangkat di jaringan WiFi lokal. Cepat, privat, tanpa aplikasi tambahan.">
+
+    <!-- ===================== PWA / Native App Metadata ===================== -->
+    <meta name="theme-color" content="#ffd93d">
+    <meta name="application-name" content="Al-share">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Al-share">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+    <link rel="mask-icon" href="/icons/icon.svg" color="#0a0a0a">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script>
+        // Apply the saved theme before first paint (avoids a white flash in standalone mode).
+        (function () {
+            try {
+                var t = localStorage.getItem('alshare_theme');
+                document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light';
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body class="light-theme">
+    <script>
+        // Avoid a light flash when the saved theme is dark.
+        try {
+            if (localStorage.getItem('alshare_theme') === 'dark') {
+                document.body.className = 'dark-theme';
+            }
+        } catch (e) {}
+    </script>
+    <!-- Native-style launch screen -->
+    <div class="launch-screen" id="launchScreen" aria-hidden="true">
+        <div class="launch-mark">
+            <svg viewBox="0 0 100 100" width="96" height="96" aria-hidden="true">
+                <rect x="2" y="2" width="96" height="96" rx="22" fill="#ffd93d"/>
+                <rect x="6.5" y="6.5" width="87" height="87" rx="19" fill="none" stroke="#0a0a0a" stroke-width="9"/>
+                <rect x="20" y="20" width="60" height="60" rx="12.5" fill="#0a0a0a"/>
+                <polygon points="53,26 34.4,54.2 47.6,54.2 43,74 65,45.8 51.8,45.8" fill="#ffd93d"/>
+            </svg>
+        </div>
+        <div class="launch-title">Al-share</div>
+        <div class="launch-sub">WLAN Unlimited Sharing</div>
+        <div class="launch-track"><span></span></div>
+    </div>
+
+    <!-- Connection state banner -->
+    <div class="offline-banner" id="offlineBanner" role="status" aria-live="polite">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M1 1l22 22"></path>
+            <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+            <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+            <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+            <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+            <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+        <span>Offline — menampilkan data terakhir</span>
+    </div>
+
     <div class="app-container">
         <!-- Top Navigation Bar -->
         <header class="app-header">
@@ -41,6 +102,16 @@
                         <div class="storage-mini-fill" id="storageMiniFill" style="width: 0%;"></div>
                     </div>
                 </div>
+
+                <!-- Install App Button (shown when installable) -->
+                <button class="btn btn-icon btn-install hidden" id="btnInstall" title="Pasang Al-share sebagai Aplikasi">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" x2="12" y1="15" y2="3"></line>
+                    </svg>
+                    <span class="btn-text-desktop">Pasang</span>
+                </button>
 
                 <!-- QR Modal Button -->
                 <button class="btn btn-icon" id="btnOpenQr" title="Tampilkan QR Code Sambungan">
@@ -89,38 +160,50 @@
             </div>
         </div>
 
-        <!-- Navigation Tabs -->
-        <nav class="nav-tabs">
-            <button class="tab-btn active" data-tab="tab-upload">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" x2="12" y1="3" y2="15"></line>
-                </svg>
-                <span>Kirim & Unggah</span>
+        <!-- Navigation Tabs (app tab bar on mobile) -->
+        <nav class="nav-tabs" id="navTabs" role="tablist" aria-label="Navigasi utama">
+            <button class="tab-btn active" data-tab="tab-upload" role="tab" aria-selected="true" aria-controls="tab-upload">
+                <span class="tab-ico">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" x2="12" y1="3" y2="15"></line>
+                    </svg>
+                </span>
+                <span class="tab-label">Kirim & Unggah</span>
+                <span class="tab-label-short">Kirim</span>
             </button>
-            <button class="tab-btn" data-tab="tab-files">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
-                </svg>
-                <span>Semua File</span>
-                <span class="counter-badge" id="fileCountBadge">0</span>
+            <button class="tab-btn" data-tab="tab-files" role="tab" aria-selected="false" aria-controls="tab-files">
+                <span class="tab-ico">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+                    </svg>
+                    <span class="counter-badge" id="fileCountBadge">0</span>
+                </span>
+                <span class="tab-label">Semua File</span>
+                <span class="tab-label-short">File</span>
             </button>
-            <button class="tab-btn" data-tab="tab-clipboard">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                </svg>
-                <span>Papan Teks (Clipboard)</span>
+            <button class="tab-btn" data-tab="tab-clipboard" role="tab" aria-selected="false" aria-controls="tab-clipboard">
+                <span class="tab-ico">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    </svg>
+                </span>
+                <span class="tab-label">Papan Teks (Clipboard)</span>
+                <span class="tab-label-short">Teks</span>
             </button>
-            <button class="tab-btn" data-tab="tab-network">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
-                    <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
-                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-                    <line x1="12" y1="20" x2="12.01" y2="20"></line>
-                </svg>
-                <span>Jaringan WiFi</span>
+            <button class="tab-btn" data-tab="tab-network" role="tab" aria-selected="false" aria-controls="tab-network">
+                <span class="tab-ico">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+                        <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                    </svg>
+                </span>
+                <span class="tab-label">Jaringan WiFi</span>
+                <span class="tab-label-short">WiFi</span>
             </button>
         </nav>
 
@@ -328,6 +411,51 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Native app status card -->
+                    <div class="native-card card">
+                        <div class="native-card-header">
+                            <div class="native-icon">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect>
+                                    <path d="M12 18h.01"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>Mode Aplikasi Native</h3>
+                                <p class="text-muted">Pasang Al-share ke layar utama agar terbuka layar penuh, tanpa address bar, dengan ikon sendiri.</p>
+                            </div>
+                        </div>
+
+                        <div class="native-status-grid">
+                            <div class="native-status-row">
+                                <span>Status Instalasi</span>
+                                <strong id="installStateText">Belum terpasang</strong>
+                            </div>
+                            <div class="native-status-row">
+                                <span>Mode Tampilan</span>
+                                <strong id="displayModeText">Browser</strong>
+                            </div>
+                            <div class="native-status-row">
+                                <span>Layanan Offline</span>
+                                <strong id="swStateText">Memeriksa…</strong>
+                            </div>
+                            <div class="native-status-row">
+                                <span>Koneksi Server</span>
+                                <strong id="connStateText">Online</strong>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-block" id="btnInstallCard">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" x2="12" y1="15" y2="3"></line>
+                            </svg>
+                            Pasang Aplikasi
+                        </button>
+                        <p class="native-hint" id="installHint">Buka menu browser lalu pilih “Tambahkan ke layar utama” jika tombol pasang belum tersedia.</p>
+                    </div>
                 </div>
             </section>
         </main>
@@ -374,6 +502,32 @@
             <div class="modal-body preview-body" id="previewContent">
                 <!-- Preview elements inserted dynamically -->
             </div>
+        </div>
+    </div>
+
+    <!-- Pull-to-refresh indicator -->
+    <div class="ptr-indicator" id="ptrIndicator" aria-hidden="true">
+        <span class="ptr-spinner"></span>
+        <span class="ptr-label" id="ptrLabel">Tarik untuk menyegarkan</span>
+    </div>
+
+    <!-- Install bottom sheet -->
+    <div class="install-sheet" id="installSheet" role="dialog" aria-labelledby="installSheetTitle">
+        <div class="install-sheet-art">
+            <svg viewBox="0 0 100 100" width="44" height="44" aria-hidden="true">
+                <rect x="2" y="2" width="96" height="96" rx="22" fill="#ffd93d"/>
+                <rect x="6.5" y="6.5" width="87" height="87" rx="19" fill="none" stroke="#0a0a0a" stroke-width="9"/>
+                <rect x="20" y="20" width="60" height="60" rx="12.5" fill="#0a0a0a"/>
+                <polygon points="53,26 34.4,54.2 47.6,54.2 43,74 65,45.8 51.8,45.8" fill="#ffd93d"/>
+            </svg>
+        </div>
+        <div class="install-sheet-text">
+            <strong id="installSheetTitle">Pasang Al-share</strong>
+            <span>Layar penuh, lebih cepat, dan bisa dibuka langsung dari layar utama.</span>
+        </div>
+        <div class="install-sheet-actions">
+            <button class="btn btn-primary btn-sm" id="btnInstallSheet">Pasang</button>
+            <button class="btn btn-ghost btn-sm" id="btnInstallDismiss">Nanti</button>
         </div>
     </div>
 

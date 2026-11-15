@@ -39,6 +39,17 @@ Dibuat menggunakan **Python 3 Standard Library** murni (zero external pip depend
 - Tidak memerlukan `pip install`.
 - Mesin QR Code, HTTP server, dan pengatur berkas dirancang mandiri menggunakan pustaka standar Python 3.
 
+### 6. 📲 Mode Aplikasi Native (PWA)
+- **Installable**: Web App Manifest + ikon PNG/SVG + splash screen membuat Al-share bisa dipasang ke layar utama.
+- **Layar penuh tanpa address bar**: saat dipasang, aplikasi terbuka dalam mode `standalone` seperti aplikasi Android/iOS.
+- **Bottom tab bar & bottom sheet**: navigasi di bawah (Kirim · File · Teks · WiFi) dan modal bergaya *sheet* saat di layar kecil.
+- **App bar sticky + safe area**: ramah notch dan status bar, baik Android maupun iOS.
+- **Getaran haptic**: umpan balik halus saat berpindah tab, menyalin, dan transfer selesai.
+- **Pull-to-refresh**: tarik ke bawah untuk menyegarkan daftar file dan clipboard.
+- **Pintasan aplikasi**: tekan lama ikon Al-share untuk langsung membuka Kirim, File, Teks, atau WiFi.
+- **App shell offline**: kerangka antarmuka tersimpan di perangkat; saat server tidak terjangkau, muncul halaman *offline* bergaya Al-share.
+- **Deteksi status**: kartu “Mode Aplikasi Native” di tab WiFi menampilkan status instalasi, mode tampilan, layanan offline, dan koneksi.
+
 ---
 
 ## 🚀 Cara Menjalankan
@@ -52,6 +63,22 @@ alshare
 ### Cara 2: Menjalankan via Script Python
 ```bash
 python3 ~/al-share/alshare.py
+```
+
+---
+
+## 📲 Memasang sebagai Aplikasi (Mode Native)
+
+1. Jalankan `alshare`, lalu buka alamat `http://<ip>:8080` di Chrome/Edge/Safari.
+2. Ketuk tombol **Pasang** di header, atau buka menu browser lalu pilih **“Tambahkan ke layar utama”** / **“Instal aplikasi”**.
+3. Al-share akan muncul dengan ikon sendiri dan terbuka layar penuh tanpa address bar.
+4. Tekan lama ikonnya untuk memakai pintasan **Kirim**, **File**, **Teks**, dan **WiFi**.
+
+> **Catatan HTTPS:** service worker (cache offline + prompt instal otomatis) hanya aktif pada *secure context*, yaitu **HTTPS** atau **http://localhost**. Saat diakses lewat `http://192.168.x.x`, seluruh tampilan native tetap berjalan, tetapi tombol pasang otomatis dan cache offline tidak tersedia. Untuk pengalaman penuh di perangkat lain, akses melalui reverse proxy HTTPS (mis. Caddy/Cloudflare Tunnel) atau buka di perangkat yang sama lewat `localhost`.
+
+Ingin mengganti ikon aplikasi? Sunting `tools/make_icons.py`, lalu jalankan:
+```bash
+python3 tools/make_icons.py
 ```
 
 ---
@@ -82,10 +109,16 @@ al-share/
 │   ├── qrcode.py       # Mesin generator QR Code murni Python (Terminal & SVG)
 │   ├── server.py       # Multi-threaded HTTP server dengan Range & Chunked streaming
 │   └── storage.py      # Pengelola berkas, chunk assembler, dan clipboard
+├── tools/
+│   └── make_icons.py   # Generator ikon PWA murni Python (PNG + SVG)
 └── web/
-    ├── index.html      # Tampilan antarmuka pengguna (SPA)
-    ├── style.css       # Desain CSS Neo-Brutalism responsif
-    └── app.js          # Mesin pengunggah potongan file (Chunked Uploader)
+    ├── index.html      # Tampilan antarmuka pengguna (app shell)
+    ├── style.css       # Desain CSS Neo-Brutalism + native app shell responsif
+    ├── app.js          # Mesin upload chunk, tab, haptics, PWA, pull-to-refresh
+    ├── manifest.webmanifest  # Manifest PWA (nama, ikon, pintasan, standalone)
+    ├── sw.js           # Service worker (app shell offline & cache runtime)
+    ├── offline.html    # Halaman fallback saat server tidak terjangkau
+    └── icons/          # Ikon aplikasi 192/512, maskable, apple-touch, favicon
 ```
 
 ---

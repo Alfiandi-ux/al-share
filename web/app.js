@@ -10,7 +10,8 @@ const state = {
     activeFilter: 'all',
     searchQuery: '',
     viewMode: localStorage.getItem('alshare_view_mode') || 'grid',
-    theme: localStorage.getItem('alshare_theme') || 'light',
+    theme: localStorage.getItem('alshare_theme')
+        || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
     info: null,
     uploadQueue: [],
     activeUploads: new Map(), // uploadId -> { file, status, xhr, ... }
@@ -76,19 +77,42 @@ const DOM = {
     previewDownloadBtn: document.getElementById('previewDownloadBtn'),
 
     // Toasts
-    toastContainer: document.getElementById('toastContainer')
+    toastContainer: document.getElementById('toastContainer'),
+
+    // Native app shell (PWA)
+    launchScreen: document.getElementById('launchScreen'),
+    offlineBanner: document.getElementById('offlineBanner'),
+    btnInstall: document.getElementById('btnInstall'),
+    btnInstallCard: document.getElementById('btnInstallCard'),
+    installSheet: document.getElementById('installSheet'),
+    btnInstallSheet: document.getElementById('btnInstallSheet'),
+    btnInstallDismiss: document.getElementById('btnInstallDismiss'),
+    installStateText: document.getElementById('installStateText'),
+    displayModeText: document.getElementById('displayModeText'),
+    swStateText: document.getElementById('swStateText'),
+    connStateText: document.getElementById('connStateText'),
+    installHint: document.getElementById('installHint'),
+    ptrIndicator: document.getElementById('ptrIndicator'),
+    ptrLabel: document.getElementById('ptrLabel')
 };
+
+// Native shell state
+const INSTALL_DISMISS_KEY = 'alshare_install_dismissed';
+const ACTIVE_TAB_KEY = 'alshare_active_tab';
+let deferredInstallPrompt = null;
 
 // ==========================================
 // Initialization
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    initNativeShell();
     initTabs();
     initUploadEvents();
     initFileEvents();
     initClipboardEvents();
     initModals();
+    initPullToRefresh();
 
     // Initial data fetch
     fetchServerInfo();
@@ -104,30 +128,41 @@ document.addEventListener('DOMContentLoaded', () => {
 // Theme Management
 // ==========================================
 function initTheme() {
-    if (state.theme === 'light') {
-        document.body.classList.remove('dark-theme');
-        document.body.classList.add('light-theme');
-        DOM.themeIconDark.classList.add('hidden');
-        DOM.themeIconLight.classList.remove('hidden');
-    } else {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme');
-        DOM.themeIconDark.classList.remove('hidden');
-        DOM.themeIconLight.classList.add('hidden');
-    }
+    applyTheme(state.theme);
 
     DOM.themeToggle.addEventListener('click', () => {
-        if (document.body.classList.contains('light-theme')) {
-            document.body.classList.replace('light-theme', 'dark-theme');
-            localStorage.setItem('alshare_theme', 'dark');
-            DOM.themeIconDark.classList.remove('hidden');
-            DOM.themeIconLight.classList.add('hidden');
-        } else {
-            document.body.classList.replace('dark-theme', 'light-theme');
-            localStorage.setItem('alshare_theme', 'light');
-            DOM.themeIconDark.classList.add('hidden');
-            DOM.themeIconLight.classList.remove('hidden');
-        }
+        const next = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
+        applyTheme(next, true);
+        haptic('light');
+    });
+
+    // Follow the OS theme until the user picks one explicitly.
+    if (window.matchMedia) {
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        const onChange = (e) => {
+            if (!localStorage.getItem('alshare_theme')) applyTheme(e.matches ? 'dark' : 'light');
+        };
+        if (media.addEventListener) media.addEventListener('change', onChange);
+    }
+}
+
+function applyTheme(theme, persist = false) {
+    const dark = theme === 'dark';
+    state.theme = dark ? 'dark' : 'light';
+    document.body.classList.toggle('dark-theme', dark);
+    document.body.classList.toggle('light-theme', !dark);
+    DOM.themeIconDark.classList.toggle('hidden', !dark);
+    DOM.themeIconLight.classList.toggle('hidden', dark);
+    syncThemeColor();
+
+    if (persist) localStorage.setItem('alshare_theme', state.theme);
+}
+
+function syncThemeColor() {
+    const dark = document.body.classList.contains('dark-theme');
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    document.querySelectorAll('meta[name="theme-color"]').forEach(meta => {
+        meta.setAttribute('content', dark ? '#0b0b0b' : '#ffd93d');
     });
 }
 
@@ -137,18 +172,326 @@ function initTheme() {
 function initTabs() {
     DOM.tabs.forEach(btn => {
         btn.addEventListener('click', () => {
-            const tabId = btn.dataset.tab;
-            DOM.tabs.forEach(t => t.classList.remove('active'));
-            DOM.tabContents.forEach(c => c.classList.remove('active'));
-
-            btn.classList.add('active');
-            const targetContent = document.getElementById(tabId);
-            if (targetContent) targetContent.classList.add('active');
-
-            if (tabId === 'tab-files') fetchFiles();
-            if (tabId === 'tab-clipboard') fetchClipboard();
+            activateTab(btn.dataset.tab, { user: true });
         });
     });
+
+    // Restore last tab, or jump straight to the tab requested by a PWA shortcut.
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get('tab');
+    const saved = localStorage.getItem(ACTIVE_TAB_KEY);
+    const initial = requested && document.getElementById(requested)
+        ? requested
+        : (saved && document.getElementById(saved) ? saved : 'tab-upload');
+
+    activateTab(initial, { user: false });
+}
+
+function activateTab(tabId, options = {}) {
+    const targetBtn = Array.from(DOM.tabs).find(btn => btn.dataset.tab === tabId);
+    const targetContent = document.getElementById(tabId);
+    if (!targetBtn || !targetContent) return;
+
+    DOM.tabs.forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+    });
+    DOM.tabContents.forEach(content => content.classList.remove('active'));
+
+    targetBtn.classList.add('active');
+    targetBtn.setAttribute('aria-selected', 'true');
+    targetContent.classList.add('active');
+
+    if (options.user) {
+        haptic('light');
+        if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Keep the URL shareable / shortcut friendly without reloading.
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tabId);
+            history.replaceState(null, '', url);
+        } catch (e) {}
+    }
+
+    try { localStorage.setItem(ACTIVE_TAB_KEY, tabId); } catch (e) {}
+
+    if (tabId === 'tab-files') fetchFiles();
+    if (tabId === 'tab-clipboard') fetchClipboard();
+}
+
+// ==========================================
+// Native App Shell (PWA)
+// ==========================================
+function initNativeShell() {
+    // 1. Native-style launch screen
+    const hideLaunch = () => {
+        const screen = DOM.launchScreen;
+        if (!screen || screen.classList.contains('done')) return;
+        screen.classList.add('done');
+        setTimeout(() => screen.remove(), 450);
+    };
+    if (document.readyState === 'complete') {
+        setTimeout(hideLaunch, 280);
+    } else {
+        window.addEventListener('load', () => setTimeout(hideLaunch, 280), { once: true });
+    }
+    setTimeout(hideLaunch, 2400); // Safety net if a resource hangs
+
+    // 2. Standalone (installed app) detection
+    document.body.classList.toggle('native-standalone', isStandalone());
+    if (window.matchMedia) {
+        const displayMode = window.matchMedia('(display-mode: standalone)');
+        const syncMode = () => {
+            document.body.classList.toggle('native-standalone', isStandalone());
+            refreshNativeStatus();
+        };
+        if (displayMode.addEventListener) displayMode.addEventListener('change', syncMode);
+    }
+
+    // 3. Connectivity awareness
+    const syncConnection = (announce) => {
+        const offline = !navigator.onLine;
+        document.body.classList.toggle('is-offline', offline);
+        if (DOM.connStateText) DOM.connStateText.textContent = offline ? 'Offline' : 'Online';
+        if (announce) {
+            showToast(
+                offline ? 'Koneksi terputus — menampilkan data terakhir' : 'Kembali online',
+                offline ? 'danger' : 'success'
+            );
+        }
+    };
+    window.addEventListener('online', () => syncConnection(true));
+    window.addEventListener('offline', () => syncConnection(true));
+    syncConnection(false);
+
+    // 4. Install flow
+    window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        refreshNativeStatus();
+        maybeOfferInstall();
+    });
+    window.addEventListener('appinstalled', () => {
+        deferredInstallPrompt = null;
+        hideInstallSheet();
+        refreshNativeStatus();
+        haptic('success');
+        showToast('Al-share berhasil dipasang sebagai aplikasi!', 'success');
+    });
+
+    if (DOM.btnInstall) DOM.btnInstall.addEventListener('click', promptInstall);
+    if (DOM.btnInstallCard) DOM.btnInstallCard.addEventListener('click', promptInstall);
+    if (DOM.btnInstallSheet) DOM.btnInstallSheet.addEventListener('click', promptInstall);
+    if (DOM.btnInstallDismiss) {
+        DOM.btnInstallDismiss.addEventListener('click', () => {
+            hideInstallSheet();
+            try { localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now())); } catch (e) {}
+        });
+    }
+
+    // 5. Desktop/installation metadata
+    registerServiceWorker();
+    refreshNativeStatus();
+
+    // 6. Guard against accidentally closing the app mid-transfer
+    window.addEventListener('beforeunload', (event) => {
+        if (state.uploadQueue.some(task => task.status === 'uploading')) {
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
+}
+
+function isStandalone() {
+    if (window.navigator.standalone === true) return true;
+    if (!window.matchMedia) return false;
+    return ['standalone', 'fullscreen', 'minimal-ui'].some(mode =>
+        window.matchMedia(`(display-mode: ${mode})`).matches
+    );
+}
+
+function refreshNativeStatus() {
+    const standalone = isStandalone();
+    const canInstall = Boolean(deferredInstallPrompt);
+    const secure = window.isSecureContext;
+
+    if (DOM.installStateText) {
+        DOM.installStateText.textContent = standalone
+            ? 'Terpasang'
+            : (canInstall ? 'Siap dipasang' : 'Belum terpasang');
+    }
+    if (DOM.displayModeText) {
+        DOM.displayModeText.textContent = standalone ? 'Standalone (native)' : 'Browser';
+    }
+    if (DOM.connStateText) {
+        DOM.connStateText.textContent = navigator.onLine ? 'Online' : 'Offline';
+    }
+
+    if (DOM.btnInstall) {
+        DOM.btnInstall.classList.toggle('hidden', !canInstall || standalone);
+    }
+    if (DOM.btnInstallCard) {
+        DOM.btnInstallCard.classList.toggle('hidden', standalone);
+        DOM.btnInstallCard.disabled = !canInstall;
+    }
+
+    if (DOM.installHint) {
+        if (standalone) {
+            DOM.installHint.textContent = 'Aplikasi berjalan dalam mode layar penuh dengan ikon sendiri.';
+        } else if (canInstall) {
+            DOM.installHint.textContent = 'Ketuk “Pasang Aplikasi” untuk menambahkan Al-share ke layar utama.';
+        } else if (!secure) {
+            DOM.installHint.textContent = 'Pemasangan penuh butuh HTTPS atau localhost. Untuk sekarang gunakan menu browser → “Tambahkan ke layar utama”.';
+        } else {
+            DOM.installHint.textContent = 'Buka menu browser → “Tambahkan ke layar utama” untuk memasang Al-share.';
+        }
+    }
+}
+
+function maybeOfferInstall() {
+    if (!deferredInstallPrompt || isStandalone()) return;
+
+    let offered = false;
+    let dismissedAt = 0;
+    try {
+        offered = sessionStorage.getItem('alshare_install_offered') === '1';
+        dismissedAt = Number(localStorage.getItem(INSTALL_DISMISS_KEY) || 0);
+    } catch (e) {}
+    if (offered) return;
+    if (dismissedAt && Date.now() - dismissedAt < 14 * 24 * 60 * 60 * 1000) return;
+
+    try { sessionStorage.setItem('alshare_install_offered', '1'); } catch (e) {}
+    setTimeout(showInstallSheet, 3200);
+}
+
+function showInstallSheet() {
+    if (!DOM.installSheet || isStandalone() || !deferredInstallPrompt) return;
+    DOM.installSheet.classList.add('show');
+}
+
+function hideInstallSheet() {
+    if (DOM.installSheet) DOM.installSheet.classList.remove('show');
+}
+
+async function promptInstall() {
+    if (!deferredInstallPrompt) {
+        showToast('Gunakan menu browser → “Tambahkan ke layar utama”', 'info', 4500);
+        return;
+    }
+    haptic('medium');
+    deferredInstallPrompt.prompt();
+    try {
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+            showToast('Memasang Al-share…', 'success');
+        }
+    } catch (e) {}
+    deferredInstallPrompt = null;
+    hideInstallSheet();
+    refreshNativeStatus();
+}
+
+function registerServiceWorker() {
+    if (!DOM.swStateText) return;
+    if (!('serviceWorker' in navigator)) {
+        DOM.swStateText.textContent = 'Tidak didukung';
+        return;
+    }
+    if (!window.isSecureContext) {
+        DOM.swStateText.textContent = 'Butuh HTTPS';
+        return;
+    }
+
+    navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+            DOM.swStateText.textContent = 'Aktif';
+
+            registration.addEventListener('updatefound', () => {
+                const worker = registration.installing;
+                if (!worker) return;
+                worker.addEventListener('statechange', () => {
+                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        showToast('Versi baru Al-share tersedia — buka ulang untuk memperbarui.', 'info', 6000);
+                    }
+                });
+            });
+        })
+        .catch(() => {
+            DOM.swStateText.textContent = 'Gagal';
+        });
+}
+
+// ==========================================
+// Pull to Refresh (mobile)
+// ==========================================
+function initPullToRefresh() {
+    const indicator = DOM.ptrIndicator;
+    if (!indicator || !('ontouchstart' in window)) return;
+
+    const THRESHOLD = 72;
+    const MAX_PULL = 118;
+    let startY = null;
+    let distance = 0;
+    let armed = false;
+
+    window.addEventListener('touchstart', (event) => {
+        if (event.touches.length !== 1 || window.scrollY > 0) return;
+        if (event.target.closest('input, textarea, .modal.active, .install-sheet, .nav-tabs')) return;
+        startY = event.touches[0].clientY;
+        distance = 0;
+        armed = true;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (event) => {
+        if (!armed || startY === null) return;
+        const delta = event.touches[0].clientY - startY;
+        if (delta <= 0) {
+            indicator.classList.remove('visible');
+            return;
+        }
+        distance = Math.min(delta * 0.5, MAX_PULL);
+        indicator.classList.add('visible');
+        indicator.classList.toggle('refreshing', distance >= THRESHOLD);
+        DOM.ptrLabel.textContent = distance >= THRESHOLD
+            ? 'Lepas untuk menyegarkan'
+            : 'Tarik untuk menyegarkan';
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+        if (!armed) return;
+        armed = false;
+        startY = null;
+
+        if (distance >= THRESHOLD) {
+            indicator.classList.add('refreshing');
+            DOM.ptrLabel.textContent = 'Menyegarkan…';
+            haptic('medium');
+            Promise.allSettled([fetchServerInfo(), fetchFiles(), fetchClipboard()]).then(() => {
+                setTimeout(() => {
+                    indicator.classList.remove('visible', 'refreshing');
+                    showToast('Data disegarkan', 'success');
+                }, 450);
+            });
+        } else {
+            indicator.classList.remove('visible', 'refreshing');
+        }
+        distance = 0;
+    });
+}
+
+// ==========================================
+// Haptics
+// ==========================================
+function haptic(type = 'light') {
+    if (!navigator.vibrate) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const patterns = {
+        light: 8,
+        medium: 18,
+        success: [12, 40, 18],
+        error: [26, 50, 26]
+    };
+    try { navigator.vibrate(patterns[type] ?? 8); } catch (e) {}
 }
 
 // ==========================================
@@ -814,19 +1157,32 @@ function fallbackCopy(text) {
 }
 
 function showToast(message, type = 'info', duration = 3000) {
+    // Native feedback: success/error buzz, info stays silent.
+    if (type === 'danger') haptic('error');
+    else if (type === 'success') haptic('success');
+
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <span>${escapeHtml(message)}</span>
-    `;
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
     DOM.toastContainer.appendChild(toast);
 
-    setTimeout(() => {
+    // Keep the stack short, like a native snackbar queue.
+    const toasts = DOM.toastContainer.querySelectorAll('.toast');
+    if (toasts.length > 3) toasts[0].remove();
+
+    let removed = false;
+    const dismiss = () => {
+        if (removed) return;
+        removed = true;
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(10px)';
         toast.style.transition = 'all 0.3s ease';
         setTimeout(() => toast.remove(), 300);
-    }, duration);
+    };
+
+    toast.addEventListener('click', dismiss);
+    setTimeout(dismiss, duration);
 }
 
 function formatBytes(bytes, decimals = 2) {

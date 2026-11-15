@@ -59,6 +59,16 @@ class AlShareHandler(BaseHTTPRequestHandler):
         self.send_cors_headers()
         self.end_headers()
 
+    def do_HEAD(self):
+        """HEAD support for app-shell assets (used by some WebViews & validators)."""
+        path = urllib.parse.urlparse(self.path).path
+        if path == "/":
+            path = "/index.html"
+        if self.serve_static_asset(path, head_only=True):
+            return
+        self.send_response(404)
+        self.end_headers()
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
@@ -71,7 +81,7 @@ class AlShareHandler(BaseHTTPRequestHandler):
                 stats = self.storage.get_storage_stats()
                 return self.send_json({
                     "name": "Al-share",
-                    "version": "1.0.0",
+                    "version": "1.1.0",
                     "ips": ips,
                     "port": self.server.server_address[1],
                     "storage": stats
@@ -116,13 +126,11 @@ class AlShareHandler(BaseHTTPRequestHandler):
                 filename = urllib.parse.unquote(filename)
                 return self.handle_file_download(filename, params)
 
-            # Static Assets
-            if path == "/" or path == "/index.html":
-                return self.serve_static_file("index.html", "text/html; charset=utf-8")
-            elif path == "/style.css":
-                return self.serve_static_file("style.css", "text/css; charset=utf-8")
-            elif path == "/app.js":
-                return self.serve_static_file("app.js", "application/javascript; charset=utf-8")
+            # Static App Shell & PWA Assets
+            if path == "/":
+                return self.serve_static_asset("index.html")
+            if self.serve_static_asset(path):
+                return
 
             # 404
             self.send_response(404)
@@ -231,24 +239,67 @@ class AlShareHandler(BaseHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
-    def serve_static_file(self, filename, content_type):
-        filepath = os.path.join(self.web_dir, filename)
-        if not os.path.exists(filepath):
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b"404 Asset Not Found")
-            return
+    # Whitelisted MIME types for the app shell and PWA assets.
+    MIME_OVERRIDES = {
+        ".html": "text/html; charset=utf-8",
+        ".css": "text/css; charset=utf-8",
+        ".js": "application/javascript; charset=utf-8",
+        ".webmanifest": "application/manifest+json; charset=utf-8",
+        ".json": "application/json; charset=utf-8",
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".ico": "image/x-icon",
+    }
 
-        with open(filepath, "rb") as f:
-            content = f.read()
+    def serve_static_asset(self, path, head_only=False):
+        """
+        Serves files from web/ with traversal protection.
+        Icons are cached aggressively; the app shell always revalidates so
+        updates show up immediately on the next launch.
+        """
+        rel = path.lstrip("/") or "index.html"
+        if rel.endswith("/"):
+            rel += "index.html"
+        if rel == "favicon.ico":
+            rel = "icons/favicon-32.png"
+
+        if ".." in rel.split("/") or any(part.startswith(".") for part in rel.split("/")):
+            return False
+
+        root = os.path.realpath(self.web_dir)
+        filepath = os.path.realpath(os.path.join(root, rel))
+        if not filepath.startswith(root + os.sep) or not os.path.isfile(filepath):
+            return False
+
+        ext = os.path.splitext(filepath)[1].lower()
+        if ext not in self.MIME_OVERRIDES:
+            return False
+
+        content_type = self.MIME_OVERRIDES[ext]
+        cache_control = (
+            "public, max-age=86400"
+            if ext in (".png", ".ico", ".svg")
+            else "no-cache, no-store, must-revalidate"
+        )
+
+        try:
+            with open(filepath, "rb") as f:
+                content = f.read()
+        except OSError:
+            return False
 
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(content)))
-        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Cache-Control", cache_control)
+        self.send_header("X-Content-Type-Options", "nosniff")
+        if rel == "sw.js":
+            self.send_header("Service-Worker-Allowed", "/")
         self.send_cors_headers()
         self.end_headers()
-        self.wfile.write(content)
+        if not head_only:
+            self.wfile.write(content)
+        return True
 
     def handle_file_download(self, filename: str, params):
         """

@@ -15,6 +15,7 @@ import sys
 import os
 import argparse
 import signal
+import threading
 
 # Add current directory to path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -43,7 +44,8 @@ BANNER = f"""{CYAN}
   ██╔══██║██║╚════╝╚════██║██╔══██║██╔══██║██╔══██╗██╔══╝  
   ██║  ██║███████╗ ███████║██║  ██║██║  ██║██║  ██║███████╗
   ╚═╝  ╚═╝╚══════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝{RESET}
-  {BOLD}⚡ WLAN Unlimited Data Sharing • Versi 1.0.0{RESET}
+  {BOLD}⚡ WLAN Unlimited Data Sharing • Versi 1.1.0{RESET}
+  {DIM}   Mode aplikasi native: pasang dari browser → “Tambahkan ke layar utama”{RESET}
 """
 
 def main():
@@ -115,11 +117,16 @@ def main():
     server.storage_manager = storage_mgr
     server.web_dir = web_dir
 
+    shutdown_started = threading.Event()
+
     def shutdown_handler(sig, frame):
+        # server.shutdown() must not run on the thread executing serve_forever(),
+        # otherwise it waits for itself forever.
+        if shutdown_started.is_set():
+            return
+        shutdown_started.set()
         print(f"\n\n{YELLOW}🛑 Menghentikan Al-share... Terima kasih!{RESET}")
-        server.shutdown()
-        server.server_close()
-        sys.exit(0)
+        threading.Thread(target=server.shutdown, daemon=True).start()
 
     signal.signal(signal.SIGINT, shutdown_handler)
     signal.signal(signal.SIGTERM, shutdown_handler)
@@ -128,6 +135,11 @@ def main():
         server.serve_forever()
     except KeyboardInterrupt:
         shutdown_handler(None, None)
+    finally:
+        try:
+            server.server_close()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     main()

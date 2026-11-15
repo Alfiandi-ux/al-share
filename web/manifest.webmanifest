@@ -1,0 +1,73 @@
+{
+  "id": "/",
+  "name": "Al-share — WLAN Unlimited Sharing",
+  "short_name": "Al-share",
+  "description": "Berbagi file tanpa batas ukuran dan clipboard antar perangkat di jaringan WiFi lokal. Cepat, privat, tanpa aplikasi tambahan.",
+  "lang": "id",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f7f1e3",
+  "theme_color": "#ffd93d",
+  "categories": ["utilities", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Kirim File",
+      "short_name": "Kirim",
+      "description": "Unggah file ke perangkat lain di jaringan WiFi",
+      "url": "/?tab=tab-upload",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Semua File",
+      "short_name": "File",
+      "description": "Lihat dan unduh file yang dibagikan",
+      "url": "/?tab=tab-files",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Papan Teks",
+      "short_name": "Teks",
+      "description": "Bagikan teks dan tautan antar perangkat",
+      "url": "/?tab=tab-clipboard",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Jaringan WiFi",
+      "short_name": "WiFi",
+      "description": "Alamat akses dan QR sambungan",
+      "url": "/?tab=tab-network",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
