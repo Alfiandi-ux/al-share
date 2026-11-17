@@ -24,8 +24,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+
+      - name: Setup Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.5
 
       - name: Sync Web Assets to Android Assets
         run: |
@@ -44,13 +50,10 @@ jobs:
             -keypass alshare123 \
             -dname "CN=Al-share, OU=Alfiandi, O=Al-share, L=Jakarta, C=ID"
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
       - name: Build Release APK
         run: |
           cd android
-          gradle assembleRelease --stacktrace
+          gradle assembleRelease --no-daemon --stacktrace
 
       - name: Prepare APK Output
         run: |
@@ -58,7 +61,7 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk release_output/Al-share.apk
           cd release_output
           sha256sum Al-share.apk > Al-share.apk.sha256
-          echo "SHA256: $(cat Al-share.apk.sha256)"
+          echo "APK Build Successful! SHA256: $(cat Al-share.apk.sha256)"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -96,6 +99,6 @@ jobs:
             - 📋 **Shared Clipboard & QR Code**: Berbagi teks instan dan sambung via QR code.
 
             ---
-            *Dibangun secara otomatis oleh GitHub Actions.*
+            *Dibangun secara otomatis oleh GitHub Actions CI/CD.*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
