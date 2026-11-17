@@ -17,3 +17,11 @@ Thumbs.db
 
 # Local transfer data
 alshare_downloads/
+
+# Android
+android/.gradle/
+android/build/
+android/*/build/
+android/*.keystore
+android/*/*.keystore
+*.apk

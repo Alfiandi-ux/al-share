@@ -1,8 +1,23 @@
 # ⚡ Al-share: Professional WLAN Unlimited Size File Sharing
 
+[![Download Android APK](https://img.shields.io/badge/Download%20APK-Al--share%20v1.2.0-FFE600?style=for-the-badge&logo=android&logoColor=black)](https://github.com/Alfiandi-ux/al-share/releases/latest/download/Al-share.apk)
+[![GitHub Release](https://img.shields.io/github/v/release/Alfiandi-ux/al-share?style=for-the-badge&color=00F0FF&label=Release)](https://github.com/Alfiandi-ux/al-share/releases)
+
 **Al-share** adalah aplikasi berbagi data dan berkas berkecepatan tinggi melalui jaringan WiFi / WLAN lokal dengan kapasitas **tanpa batas ukuran (Unlimited File Size)** dan antarmuka web modern kelas profesional.
 
-Dibuat menggunakan **Python 3 Standard Library** murni (zero external pip dependencies) dan teknologi **Chunked Disk Streaming**, Al-share mampu mentransfer file berukuran raksasa (10 GB, 50 GB, 100 GB+) dengan penggunaan RAM yang sangat rendah dan stabil.
+Kini tersedia dalam bentuk **Aplikasi Android Native (.apk)** mandiri dan **Python Server**!
+
+---
+
+## 📲 Unduh Aplikasi Android (.apk) Langsung ke HP
+
+Untuk memasang Al-share di HP lain tanpa memerlukan Termux atau Python:
+
+1. Buka tautan rilis langsung dari browser HP Anda:
+   👉 **[Unduh Al-share.apk](https://github.com/Alfiandi-ux/al-share/releases/latest/download/Al-share.apk)**
+   *(Atau kunjungi halaman [GitHub Releases](https://github.com/Alfiandi-ux/al-share/releases))*
+2. Setelah file `.apk` selesai diunduh, ketuk untuk memasang (*Install*). Izinkan instalasi dari sumber tidak dikenal jika diminta oleh Android.
+3. Buka aplikasi **Al-share**. Server akan langsung berjalan secara otomatis di latar belakang dan berkas yang diterima akan otomatis tersimpan di folder `Downloads/alshare` ponsel Anda!
 
 ---
 

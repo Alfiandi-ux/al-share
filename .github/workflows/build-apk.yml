@@ -1,0 +1,101 @@
+name: Build and Release Al-share APK
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Sync Web Assets to Android Assets
+        run: |
+          mkdir -p android/app/src/main/assets/web
+          cp -r web/* android/app/src/main/assets/web/
+
+      - name: Generate Release Keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore android/app/alshare.keystore \
+            -alias alshare \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass alshare123 \
+            -keypass alshare123 \
+            -dname "CN=Al-share, OU=Alfiandi, O=Al-share, L=Jakarta, C=ID"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Release APK
+        run: |
+          cd android
+          gradle assembleRelease --stacktrace
+
+      - name: Prepare APK Output
+        run: |
+          mkdir -p release_output
+          cp android/app/build/outputs/apk/release/app-release.apk release_output/Al-share.apk
+          cd release_output
+          sha256sum Al-share.apk > Al-share.apk.sha256
+          echo "SHA256: $(cat Al-share.apk.sha256)"
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Al-share-APK
+          path: release_output/Al-share.apk
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.2.0' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/') && format('Al-share {0}', github.ref_name) || 'Al-share v1.2.0' }}
+          draft: false
+          prerelease: false
+          files: |
+            release_output/Al-share.apk
+            release_output/Al-share.apk.sha256
+          body: |
+            ## ⚡ Al-share Android APK Release
+
+            Aplikasi Android native mandiri untuk **Al-share** — Berbagi data kecepatan tinggi tanpa batas ukuran via WLAN / WiFi lokal.
+
+            ### 📲 Unduh & Pasang di HP:
+            - **[Unduh Al-share.apk](https://github.com/Alfiandi-ux/al-share/releases/latest/download/Al-share.apk)** *(Klik langsung dari browser HP Anda)*
+            - **Versi**: 1.2.0
+            - **Arsitektur**: Universal APK (Mendukung semua perangkat Android 7.0+)
+
+            ### 🌟 Fitur Baru di Versi APK:
+            - 🚀 **Server Bawaan (Built-in)**: Tidak butuh Termux atau Python lagi di HP! Cukup buka aplikasi, server langsung aktif.
+            - ⚡ **Chunked Disk Streaming**: Mendukung pengiriman berkas raksasa (10 GB+) langsung ke memori internal/Downloads tanpa crash.
+            - 💎 **Tampilan Neo-Brutalism**: Webview interaktif dengan pemilih berkas native galeri/dokumen.
+            - 🔔 **Foreground Service**: Server tetap aktif di latar belakang meski layar mati atau berpindah aplikasi.
+            - 🔗 **Mode Hubungkan**: Bisa bertindak sebagai Server (pengirim) maupun Client (penerima dari HP lain).
+            - 📋 **Shared Clipboard & QR Code**: Berbagi teks instan dan sambung via QR code.
+
+            ---
+            *Dibangun secara otomatis oleh GitHub Actions.*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Al-share</string>
+    <string name="server_running">Al-share Server Aktif</string>
+    <string name="server_stopped">Al-share Server Berhenti</string>
+    <string name="copy_link">Salin Link</string>
+    <string name="copied">Link berhasil disalin ke papan klip!</string>
+    <string name="open_browser">Browser</string>
+    <string name="connect_mode">Hubungkan</string>
+    <string name="stop">Berhenti</string>
+    <string name="action_open">Buka</string>
+    <string name="channel_name">Al-share Server Service</string>
+    <string name="channel_desc">Notifikasi status layanan background server Al-share</string>
+</resources>
